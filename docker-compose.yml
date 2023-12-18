@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  api:
+    tty: true
+    stdin_open: true
+    build:
+      context: "."
+      dockerfile: ./docker/Dockerfile
+      target: base
+    command: /scripts/entrypoint.sh
+    volumes:
+      - .:/var/www/html
+      - ./docker/scripts:/scripts
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    privileged: true
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_USER: ${MYSQL_USER:-dbuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dbpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-coffee}
+    env_file:
+      - .env.docker
+    volumes:
+      - coffee-db:/var/lib/mysql
+    command: mysqld --innodb_use_native_aio=0
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-proot"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: ${PMA_HOST:-db}
+      PMA_USER: ${PMA_USER:-dbuser}
+      PMA_PASSWORD: ${PMA_PASSWORD:-dbpass}
+    env_file:
+      - .env.docker
+
+  redis:
+    image: redis:4.0
+    container_name: app_redis_coffee
+    ports:
+      - "6379:6379"
+volumes:
+  coffee-db:

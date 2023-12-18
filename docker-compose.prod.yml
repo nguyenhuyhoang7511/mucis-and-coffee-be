@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+    db:
+        image: mysql:5.7
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_USER: ${MYSQL_USER:-dbuser}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dbpass}
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-coffee}
+        volumes:
+            - coffee-db:/var/lib/mysql
+        command: mysqld --innodb_use_native_aio=0
+        ports:
+            - '3306:3306'
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-proot']
+            interval: 1m30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
+    redis:
+        image: redis:4.0
+        container_name: app_redis
+        restart: always
+        command: redis-server
+        volumes:
+            - ./data:/data
+        ports:
+            - 6379:6379
+volumes:
+    coffee-db:
