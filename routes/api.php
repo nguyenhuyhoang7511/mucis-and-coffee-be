@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,7 +22,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 Route::get('/hello', function () {
-    return "hello";
+    $users = DB::table('users')->get();
+
+    return "hello" . $users;
 });
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
