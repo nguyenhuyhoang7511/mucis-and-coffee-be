@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginFormRequest;
+use App\Http\Requests\RegisterFormRequest;
+use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterFormRequest $request)
     {
         $request->validate([
-            'name' => 'required|string',
+            'userName' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
+        User::create([
+            'name' => $request->userName,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
@@ -25,7 +28,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Registration successful'], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginFormRequest $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -40,5 +43,11 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Invalid login credentials'], 401);
+    }
+    public function sendMail() 
+    {
+        $users = User::all();
+
+        SendEmail::dispatch("wellcome", $users)->delay(now()->addMinute(1));
     }
 }
