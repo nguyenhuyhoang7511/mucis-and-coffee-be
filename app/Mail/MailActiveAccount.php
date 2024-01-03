@@ -11,15 +11,17 @@ class MailActiveAccount extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $numberCode ;
+    public $userName;
+    public $numberCode;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($numberCode, $userName)
     {
-        $this->numberCode = mt_rand(100000, 999999);
+        $this->numberCode = $numberCode;
+        $this->userName = $userName;
     }
 
     /**
@@ -31,7 +33,6 @@ class MailActiveAccount extends Mailable
     {
         return $this->from('nguyenhoang080721@gmail.com')
             ->view('mails.mail_active')
-            ->subject('Email active account')->with($this->numberCode);
-            ;
+            ->subject('Email active account')->with($this->numberCode, $this->userName);
     }
 }

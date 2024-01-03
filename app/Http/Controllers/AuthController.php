@@ -8,24 +8,42 @@ use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     public function register(RegisterFormRequest $request)
     {
-        $request->validate([
-            'userName' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-        ]);
+        DB::beginTransaction();
 
-        User::create([
-            'name' => $request->userName,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
+        try {
+            $request->validate([
+                'userName' => 'required|string',
+                'email' => 'required|email',
+                'password' => 'required|min:6',
+            ]);
 
-        return response()->json(['message' => 'Registration successful'], 201);
+            $user = User::create([
+                'name' => $request->userName,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+            ]);
+
+            $numberCode = mt_rand(100000, 999999);
+
+            $user->update([
+                'number_code' => $numberCode
+            ]);
+
+            SendEmail::dispatch($numberCode, $user)->delay(now()->addMinute(1));
+
+            DB::commit();
+
+            return response()->json(['message' => 'Registration successful'], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Registration failed'], 500);
+        }
     }
 
     public function login(LoginFormRequest $request)
@@ -44,7 +62,7 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Invalid login credentials'], 401);
     }
-    public function sendMail() 
+    public function sendMail()
     {
         $users = User::all();
 
