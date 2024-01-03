@@ -19,6 +19,8 @@ class UpdateUsersTable extends Migration
             $table->string('gender')->nullable()->after('is_admin');
             $table->string('address')->nullable()->after('gender');
             $table->string('phone')->nullable()->after('address');
+            $table->integer('number_code')->nullable()->after('phone');
+            $table->boolean('is_active')->default(false)->after('number_code');
         });
     }
 

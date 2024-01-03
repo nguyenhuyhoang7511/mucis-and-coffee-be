@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginFormRequest;
 use App\Http\Requests\RegisterFormRequest;
+use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,5 +43,11 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Invalid login credentials'], 401);
+    }
+    public function sendMail() 
+    {
+        $users = User::all();
+
+        SendEmail::dispatch("wellcome", $users)->delay(now()->addMinute(1));
     }
 }

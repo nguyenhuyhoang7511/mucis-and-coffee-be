@@ -15,7 +15,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8000:8000"
+      - "9000:8000"  
     privileged: true
 
   db:
@@ -42,7 +42,7 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
-      - 8081:80
+      - 9081:80
     environment:
       PMA_HOST: ${PMA_HOST:-db}
       PMA_USER: ${PMA_USER:-dbuser}
