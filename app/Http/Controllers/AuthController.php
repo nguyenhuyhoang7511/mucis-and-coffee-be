@@ -53,19 +53,39 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            $user = Auth::user();
-            $token = $user->createToken('auth_token')->plainTextToken;
+        // $remember = $request->has('remember');
 
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password ])) {
+            $user = Auth::user();
+            if ($user->is_active == 0) {
+                Auth::logout(); 
+                return response()->json(['message' => 'Tài khoản chưa được kích hoạt.'], 401);
+            }
+            if ($user->is_active == 2) {
+                Auth::logout(); 
+                return response()->json(['message' => 'Tài khoản đã bị khoá, vui lòng liên hệ quản trị viên.'], 403);
+            }
+            $token = $user->createToken('auth_token')->plainTextToken;
             return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
         }
 
         return response()->json(['message' => 'Invalid login credentials'], 401);
     }
-    public function sendMail()
+    public function activeAcount(Request $request)
     {
-        $users = User::all();
+        try {
+            $userActive = User::where('email', $request->email)->first();
 
-        SendEmail::dispatch("wellcome", $users)->delay(now()->addMinute(1));
+            if($userActive->number_code == $request->number_code)
+            {
+                $userActive->update([
+                    'is_active' => true
+                ]);
+                return response()->json(['message' => 'kích hoạt thành công'], 201);
+            }
+        return response()->json(['message' => 'Mã kích hoạt không đúng'], 500);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Kích hoạt thất bại'], 500);
+        }
     }
 }

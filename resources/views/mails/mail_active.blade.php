@@ -11,7 +11,7 @@
     <h3>Thư gửi: {{ $userName }} </h3>
     <p>Chào mừng bạn đến với hệ thống của chúng tôi </p>
     <p>Mã xác nhận của bạn là : <span style="color: red;">{{ $numberCode }}</span> </p>
-    <p>Hãy lấy mã xác nhận để gửi nó cho chúng tôi để active tài khoản bạn vừa đăng kí</p>
+    <p>Hãy lấy mã xác nhận và gửi nó cho chúng tôi để kích hoạt tài khoản bạn vừa đăng kí</p>
 </body>
 
 </html>

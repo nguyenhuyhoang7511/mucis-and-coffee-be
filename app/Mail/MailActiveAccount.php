@@ -33,6 +33,6 @@ class MailActiveAccount extends Mailable
     {
         return $this->from('nguyenhoang080721@gmail.com')
             ->view('mails.mail_active')
-            ->subject('Email active account')->with($this->numberCode, $this->userName);
+            ->subject('[Music and Coffee] Email kích hoạt tài khoản')->with($this->numberCode, $this->userName);
     }
 }
