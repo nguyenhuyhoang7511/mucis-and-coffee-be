@@ -79,11 +79,12 @@ class AuthController extends Controller
             if($userActive->number_code == $request->number_code)
             {
                 $userActive->update([
-                    'is_active' => true
+                    'is_active' => true,
+                    'number_code' => null
                 ]);
                 return response()->json(['message' => 'kích hoạt thành công'], 201);
             }
-        return response()->json(['message' => 'Mã kích hoạt không đúng'], 500);
+            return response()->json(['message' => 'Mã kích hoạt không đúng'], 500);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Kích hoạt thất bại'], 500);
         }
