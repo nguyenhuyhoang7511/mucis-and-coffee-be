@@ -24,8 +24,12 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/hello', function () {
     $users = DB::table('users')->get();
 
-    return "hello" . $users;
+    return "Get all user : " . $users;
 });
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/active-acount', [AuthController::class, 'activeAcount']);
+
+// login with google
+Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
+Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
