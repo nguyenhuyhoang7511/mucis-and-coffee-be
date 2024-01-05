@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\LoginFormRequest;
 use App\Http\Requests\RegisterFormRequest;
 use App\Jobs\SendEmail;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -87,6 +91,42 @@ class AuthController extends Controller
             return response()->json(['message' => 'Mã kích hoạt không đúng'], 500);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Kích hoạt thất bại'], 500);
+        }
+    }
+
+    public function redirectToGoogle() 
+    {
+        return response()->json(['url' => Socialite::driver('google')
+            ->stateless()
+            ->redirect()
+            ->getTargetUrl()]);
+    }
+
+    public function handleGoogleCallback()
+    {   
+        try {
+            $user = Socialite::driver('google')->stateless()->user();
+
+            $finduser = User::where('email', $user->email)->orWhere(function ($q) use ($user) {
+                $q->where('provider_name', 'google')->where('provider_id', $user->id);
+            })->first();
+
+            if ($finduser == null) {
+                $user = User::create([
+                    'name' => $user->getName(),
+                    'email' => $user->getEmail(),
+                    'password' => bcrypt(Str::random(10)),
+                    'provider_name' => 'google',
+                    'provider_id' => $user->id,
+                    'is_admin' => in_array($user->getEmail(), config('app.admin_emails')),
+                    'avatar' => $user->getAvatar(),
+                ]);
+            }
+            $token = $user->createToken(env('APP_NAME'))->plainTextToken;
+            return $this->sendResponse($token);
+
+        } catch (Exception $e) {
+            return redirect('auth/google');
         }
     }
 }
