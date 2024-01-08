@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterFormRequest;
 use App\Jobs\SendEmail;
 use App\Models\User;
 use Exception;
+use Facade\FlareClient\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,13 +53,6 @@ class AuthController extends Controller
 
     public function login(LoginFormRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        // $remember = $request->has('remember');
-
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password ])) {
             $user = Auth::user();
             if ($user->is_active == 0) {
@@ -73,7 +67,7 @@ class AuthController extends Controller
             return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
         }
 
-        return response()->json(['message' => 'Invalid login credentials'], 401);
+        return response()->json(['message' => 'Tài khoản hoặc mật khẩu không chính xác'], 401);
     }
     public function activeAcount(Request $request)
     {
@@ -87,6 +81,9 @@ class AuthController extends Controller
                     'number_code' => null
                 ]);
                 return response()->json(['message' => 'kích hoạt thành công'], 201);
+            }
+            if(!$userActive->number_code){
+                return response()->json(['message' => 'không thể kích hoạt một tài khoản đã được kích hoạt'], 500);
             }
             return response()->json(['message' => 'Mã kích hoạt không đúng'], 500);
         } catch (\Throwable $th) {
@@ -108,25 +105,28 @@ class AuthController extends Controller
             $user = Socialite::driver('google')->stateless()->user();
 
             $finduser = User::where('email', $user->email)->orWhere(function ($q) use ($user) {
-                $q->where('provider_name', 'google')->where('provider_id', $user->id);
+                $q->where('provider_name', 'google')->where('google_id', $user->id);
             })->first();
-
+ 
             if ($finduser == null) {
-                $user = User::create([
+                $newUser = User::create([
                     'name' => $user->getName(),
                     'email' => $user->getEmail(),
                     'password' => bcrypt(Str::random(10)),
                     'provider_name' => 'google',
-                    'provider_id' => $user->id,
-                    'is_admin' => in_array($user->getEmail(), config('app.admin_emails')),
+                    'google_id' => $user->id,
                     'avatar' => $user->getAvatar(),
+                    'is_active' => 1 
                 ]);
-            }
-            $token = $user->createToken(env('APP_NAME'))->plainTextToken;
-            return $this->sendResponse($token);
 
+                $token = $newUser->createToken('auth_token')->plainTextToken;
+                return response()->json(['token' => $token,'token_type' => 'Bearer']);
+            }
+
+            $token = $finduser->createToken('auth_token')->plainTextToken;
+            return response()->json(['token' => $token,'token_type' => 'Bearer']);
         } catch (Exception $e) {
-            return redirect('auth/google');
+            return $e->getMessage();
         }
     }
 }

@@ -15,7 +15,7 @@ services:
     depends_on:
       - db
     ports:
-      - "9000:8000"  
+      - "8000:8000"  
     privileged: true
 
   db:
